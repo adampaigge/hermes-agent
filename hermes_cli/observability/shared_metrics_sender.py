@@ -1,4 +1,4 @@
-"""Transmit exported shared-metrics packages to the Nous telemetry service.
+"""Shared-metrics package outbox bookkeeping. The upload transport is removed (``_post`` raises).
 
 Sender side of the ingest contract (telemetry repo ``CONTRACT.md``): ``202`` durably stored,
 mark sent; ``400`` permanently malformed, never retry; ``429`` keep, retry after
@@ -7,14 +7,11 @@ mark sent; ``400`` permanently malformed, never retry; ``429`` keep, retry after
 
 from __future__ import annotations
 
-import gzip
 import json
 import logging
 import random
 import sqlite3
 import time
-import urllib.error
-import urllib.request
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -90,32 +87,8 @@ class _Response:
 
 
 def _post(endpoint: str, payload: bytes, *, timeout: int) -> _Response:
-    """POST one package. Raises on transport failure; never on HTTP status."""
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "hermes-agent-shared-metrics/1",
-    }
-    body = payload
-    if len(payload) > GZIP_THRESHOLD_BYTES:
-        # mtime=0 keeps two sends of one package byte-identical on the wire too.
-        body = gzip.compress(payload, mtime=0)
-        headers["Content-Encoding"] = "gzip"
-
-    request = urllib.request.Request(endpoint, data=body, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return _Response(
-                response.status,
-                response.headers.get("Retry-After"),
-                response.read(2048).decode("utf-8", "replace"),
-            )
-    except urllib.error.HTTPError as exc:
-        # An HTTP error status is a normal contract outcome, not a failure.
-        return _Response(
-            exc.code,
-            exc.headers.get("Retry-After") if exc.headers else None,
-            exc.read(2048).decode("utf-8", "replace") if exc.fp else "",
-        )
+    """No network egress in this build: shared-metrics upload is removed."""
+    raise RuntimeError("shared-metrics upload is removed from this build")
 
 
 def _retry_after_seconds(value: str | None, default: int) -> int:

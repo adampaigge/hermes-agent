@@ -328,29 +328,12 @@ def _cmd_status(_args: argparse.Namespace) -> int:
 
 
 def _telemetry_enabled() -> bool:
-    """PHOTON_TELEMETRY from env / ~/.hermes/.env; truthy set mirrors the sidecar's."""
-    try:
-        from hermes_cli.config import get_env_value
-        raw = get_env_value("PHOTON_TELEMETRY")
-    except ImportError:
-        raw = os.getenv("PHOTON_TELEMETRY")
-    return (raw or "").strip().lower() in ("1", "true", "yes", "on")
+    """Spectrum SDK telemetry is removed from this build: always off."""
+    return False
 
 
 def _cmd_telemetry(args: argparse.Namespace) -> int:
-    state = getattr(args, "state", None)
-    if state is None:
-        print(f"Photon telemetry: {'on' if _telemetry_enabled() else 'off'}")
-        print("  Toggle with `hermes photon telemetry on` / `hermes photon telemetry off`.")
-        return 0
-    try:
-        from hermes_cli.config import save_env_value
-        save_env_value("PHOTON_TELEMETRY", "true" if state == "on" else "false")
-    except Exception as e:
-        print(f"could not save PHOTON_TELEMETRY: {e}", file=sys.stderr)
-        return 1
-    print(f"✓ Spectrum telemetry turned {state} (PHOTON_TELEMETRY in ~/.hermes/.env)")
-    print("  Restart the gateway for the sidecar to pick it up:  hermes gateway restart")
+    print("Photon telemetry: off (removed from this build; PHOTON_TELEMETRY is ignored)")
     return 0
 
 

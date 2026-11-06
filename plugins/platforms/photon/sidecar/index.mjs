@@ -79,9 +79,8 @@ const projectSecret = process.env.PHOTON_PROJECT_SECRET;
 const port = parseInt(process.env.PHOTON_SIDECAR_PORT || "8789", 10);
 const bind = process.env.PHOTON_SIDECAR_BIND || "127.0.0.1";
 const sharedToken = process.env.PHOTON_SIDECAR_TOKEN;
-const telemetry = /^(1|true|yes|on)$/i.test(
-  (process.env.PHOTON_TELEMETRY || "").trim()
-);
+// Spectrum SDK telemetry is removed from this build: always off, PHOTON_TELEMETRY is ignored.
+const telemetry = false;
 
 // Inbound binary content is read into memory and base64-inlined on the NDJSON
 // event so the Python adapter can cache the real bytes (and the agent can see

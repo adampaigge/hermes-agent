@@ -246,7 +246,7 @@ FROM runtime_base AS python_deps
 # frontend stats the readme path during dep resolution, so we `touch` an
 # empty placeholder — the real README is restored by `COPY . .` below.
 #
-# `pm.build_env --no-install-project --extra all --extra messaging --extra otlp`
+# `pm.build_env --no-install-project --extra all --extra messaging`
 # installs the deps reachable through the composite `[all]` extra
 # (handpicked set intended for the production image; dependency groups are not selected),
 # plus gateway messaging adapters that should work in the published image
@@ -258,10 +258,6 @@ FROM runtime_base AS python_deps
 # Provider packages (anthropic, bedrock, azure-identity) are included
 # so Docker users can use these providers without requiring runtime
 # lazy-install access to PyPI (often blocked in containerized envs).
-#
-# The [otlp] extra contains the SDK/exporter imported by Hermes when Gateway
-# Health export is enabled. Collector and observability-backend dependencies
-# remain external and are not part of the Hermes production image.
 #
 # The Matrix gateway's deps ([matrix] extra) are baked in because
 # python-olm (transitive via mautrix[encryption]) builds from source on
@@ -301,7 +297,7 @@ RUN touch ./README.md
 RUN python3 -m pm.build_env --source /opt/hermes --python /usr/local/bin/python3 \
     --cache /opt/hermes/uv-cache \
     --out /opt/hermes/.venv --no-install-project --sealed --record-selection \
-    --extra all --extra messaging --extra otlp --extra anthropic --extra bedrock \
+    --extra all --extra messaging --extra anthropic --extra bedrock \
     --extra azure-identity --extra matrix --extra google-chat --extra fal --extra documents
 
 # Icons render on the runtime environment: Pillow and resvg-py are core

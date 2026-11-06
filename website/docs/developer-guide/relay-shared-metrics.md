@@ -5,6 +5,12 @@ description: "NeMo Relay shared metrics: what is exported, consent and retention
 
 # NeMo Relay Shared Metrics
 
+> [!NOTE]
+> **This build removes shared-metrics upload.** The sender transport, the ingest endpoint, the
+> consent prompts and the OTLP exporters are gone: `telemetry.shared_metrics.send` and
+> `.endpoint` have no effect and nothing leaves the machine. The sections below describe the
+> upstream behaviour and are kept for reference only.
+
 Hermes includes NeMo Relay as a normal runtime dependency on platforms for
 which Relay publishes a native wheel. The shared-metrics integration is built
 into Hermes and does not require a Hermes observability plugin. Hermes remains

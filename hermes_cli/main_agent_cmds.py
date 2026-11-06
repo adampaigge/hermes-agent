@@ -155,7 +155,6 @@ def cmd_monitoring(args):
     mon = _dict_or_empty(load_config().get("monitoring"))
 
     if action == "status":
-        from agent.monitoring import otlp_exporter
         gh = _dict_or_empty(mon.get("gateway_health_export"))
         otlp = _dict_or_empty(_dict_or_empty(mon.get("export")).get("otlp"))
 
@@ -175,8 +174,7 @@ def cmd_monitoring(args):
             print(f"  OTLP endpoint:  {endpoint}")
         else:
             print("  OTLP endpoint:  not configured (monitoring.export.otlp)")
-        print(f"  OTel SDK:       {'installed' if otlp_exporter.is_available() else 'not installed'} "
-              f"(optional extra: hermes-agent[otlp])")
+        print("  OTel SDK:       removed from this build")
         print("\n  Scope: gateway service health + redacted diagnostics only.")
         print("  No prompts, messages, tool args/results, usage analytics, or traces.")
         return

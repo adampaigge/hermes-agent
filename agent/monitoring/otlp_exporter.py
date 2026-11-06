@@ -1,10 +1,8 @@
-"""Export monitoring events to an OpenTelemetry Collector over OTLP/HTTP.
+"""OTLP monitoring export: removed from this build.
 
-Maps gateway monitoring events to OTel spans for the operator-configured ``monitoring.export.otlp``
-endpoint (no default destination ships) and hosts the OTLP plumbing shared with
-``gateway_health_export``.  The OTel SDK is an optional extra (``hermes-agent[otlp]``) imported
-lazily; ``headers_env`` values are read at export time and never logged or stored.  The streaming
-subscriber runs fail-isolated on the emitter thread; ``event_filter`` keeps other planes off it.
+``_require_sdk`` always raises ``OTLPUnavailable``, so no exporter is ever built and nothing is sent
+to ``monitoring.export.otlp`` (or anywhere else). The module keeps its names so the gateway startup
+and health-export call sites degrade to a logged no-op.
 """
 
 from __future__ import annotations
@@ -49,27 +47,8 @@ _SPAN_SDK = ("TracerProvider", "BatchSpanProcessor", "Resource", "OTLPSpanExport
 
 
 def _require_sdk(names: Iterable[str] = _SPAN_SDK, *, auto_install: bool = True) -> dict[str, Any]:
-    """Import the named OTel SDK symbols, lazily installing the extra on first use.
-
-    Routes through pm.ensure_import('otlp') so a missing SDK triggers the
-    standard venv install flow — same as every other optional backend — gated by
-    security.allow_lazy_installs.  Any lazy-install failure falls through to the
-    import attempt, which raises OTLPUnavailable with a manual install hint.
-    """
-    if auto_install:
-        try:
-            from pm import ensure_import as _lazy_ensure
-            _lazy_ensure("otlp")
-        except Exception:
-            pass
-    try:
-        return {name: getattr(importlib.import_module(_SDK_SYMBOLS[name]), name) for name in names}
-    except Exception as e:  # ImportError or partial install
-        raise OTLPUnavailable(
-            "OTLP export requires the optional dependency. Install with:\n"
-            f"    {install_hint('otlp')}\n"
-            f"(import error: {e})"
-        )
+    """OTLP export is removed from this build: the SDK is never imported and never installed."""
+    raise OTLPUnavailable("OTLP export is removed from this build")
 
 
 # ── config + connection plumbing ─────────────────────────────────────────────
@@ -273,8 +252,7 @@ def start_streaming(
     try:
         _require_sdk()
     except OTLPUnavailable:
-        logger.warning("monitoring.export.otlp.enabled but the OTel SDK could not "
-                       "be installed/imported; install 'hermes-agent[otlp]'")
+        logger.warning("monitoring.export.otlp.enabled is set, but OTLP export is removed from this build")
         return None
     from agent.monitoring.emitter import get_emitter
     streamer = OTLPStreamer(config, event_filter=event_filter)

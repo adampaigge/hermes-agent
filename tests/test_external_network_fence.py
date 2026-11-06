@@ -23,7 +23,7 @@ def test_first_connector_action_in_a_test_home_mints_no_portal_guest():
 
 @pytest.mark.parametrize("host", [
     "portal.nousresearch.com", "inference-api.nousresearch.com", b"WELCOME-API.NOUSRESEARCH.COM.",
-    "telemetry.staging-nousresearch.com", "openrouter.ai", "models.dev", "raw.githubusercontent.com",
+    "openrouter.ai", "models.dev", "raw.githubusercontent.com",
     "example.com", b"pypi.org",
 ])
 def test_external_hosts_are_refused_at_the_name_lookup(host):

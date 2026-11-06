@@ -59,16 +59,8 @@ def consent_state(raw_cfg: Any) -> dict:
     an "off" answer from before ``OFFER_VERSION`` that may never have been seen; it reads undecided
     so every surface offers it once more. An opt-in was always a deliberate pick and stays, including
     a collect-only answer from before the offer dropped that choice."""
-    section = _section(raw_cfg)
-    enabled = section.get("enabled") is True
-    answered = "enabled" in section or "send" in section
-    reask = answered and not enabled and section.get("offer_version") != OFFER_VERSION
-    return {
-        "enabled": enabled,
-        "send": enabled and section.get("send") is True,
-        "decided": answered and not reask,
-        "reask": reask,
-    }
+    # Removed from this build: always decided and off, so no surface offers or shows sharing.
+    return {"enabled": False, "send": False, "decided": True, "reask": False}
 
 
 def _current_state() -> dict:
@@ -85,7 +77,8 @@ def set_answer(target: dict, enabled: bool, send: bool) -> None:
     section = telemetry.get("shared_metrics")
     if not isinstance(section, dict):
         section = telemetry["shared_metrics"] = {}
-    section["enabled"], section["send"] = enabled, enabled and send
+    # Shared-metrics collection and upload are removed from this build: every answer is "off".
+    section["enabled"], section["send"] = False, False
     section["offer_version"] = OFFER_VERSION
 
 
@@ -120,71 +113,13 @@ def save_consent(enabled: bool, send: bool, config: dict | None = None) -> None:
 
 
 def offer_consent(config: dict | None = None, *, reask: bool = False) -> bool:
-    """Ask once, with the offer's two answers; "No thanks" is the default so Enter never
-    opts anyone in. Esc leaves a first question open (asked again next time); on a re-ask it keeps
-    the recorded "No thanks", so nobody is asked a third time. True when answered."""
-    from hermes_cli.cli_output import print_info, print_success
-    from hermes_cli.curses_ui import curses_radiolist, flush_stdin
-
-    # The offer appears seconds into startup; an Enter typed while Hermes booted would otherwise
-    # answer it ("No thanks") before it was ever on screen, so the user was never really asked.
-    flush_stdin()
-    idx = curses_radiolist(
-        "Help improve Hermes?", [label for label, _, _ in OFFER_CHOICES], selected=_NO_THANKS, cancel_returns=-1,
-        description=f"{_REASK_NOTE}\n{_OFFER_DESCRIPTION}" if reask else _OFFER_DESCRIPTION,
-    )
-    if idx < 0 and reask:
-        save_consent(False, False, config)
-        print_info("Kept \"No thanks\". Change it any time with `hermes setup telemetry`.")
-        return True
-    if idx < 0:
-        print_info("Not answered; Hermes will ask again. Decide any time with `hermes setup telemetry`.")
-        return False
-    _, enabled, send = OFFER_CHOICES[idx]
-    save_consent(enabled, send, config)
-    outcome = "sent to Nous once a day" if send else "off"
-    print_success(f"Shared metrics {outcome}. Change it any time with `hermes setup telemetry`.")
+    """No-op: this build never asks anyone to share metrics. Always answered."""
     return True
 
 
 def offer_consent_if_undecided(config: dict | None = None) -> None:
-    """The end-of-setup offer: every ``hermes setup`` flow funnels through the setup-completed
-    record, so this one call covers Quick, Full, Blank Slate, Portal and ``--quick``."""
-    from hermes_cli.config import is_managed
-    from hermes_cli.setup import is_noninteractive
-
-    if is_managed() or is_noninteractive() or not sys.stdin.isatty():
-        return
-    state = _current_state()
-    if state["decided"]:
-        return
-    try:
-        offer_consent(config, reask=state["reask"])
-    except (KeyboardInterrupt, EOFError):
-        print()
+    """No-op: this build never asks anyone to share metrics."""
 
 
 def offer_consent_before_chat(args: Any) -> None:
-    """One-time offer before an interactive chat on a profile that never answered. Skipped for
-    anything without a person at a terminal (``-q``, piped or JSON output, spawned actions) and for
-    a Desktop-spawned pane (the app shows its own strip)."""
-    from hermes_cli.config import is_managed
-    from hermes_cli.setup import is_noninteractive
-
-    if any(getattr(args, name, None) for name in ("query", "query_file", "oneshot", "oneshot_exit")):
-        return
-    if getattr(args, "safe_mode", False) or getattr(args, "ignore_user_config", False):
-        return
-    if os.environ.get("HERMES_DESKTOP") or is_noninteractive():
-        return
-    if not (sys.stdin.isatty() and sys.stdout.isatty()) or is_managed():
-        return
-    try:
-        state = _current_state()
-        if state["decided"]:
-            return
-        offer_consent(reask=state["reask"])
-    except (KeyboardInterrupt, EOFError):
-        print()
-    except Exception:
-        logger.debug("shared-metrics offer skipped", exc_info=True)
+    """No-op: this build never asks anyone to share metrics."""
